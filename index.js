@@ -1,44 +1,12 @@
-require('dotenv').config();
-const { Client, GatewayIntentBits, Events, REST, Routes, SlashCommandBuilder, Partials } = require('discord.js');
+require("dotenv").config();
+const { Client, GatewayIntentBits, Events, Partials } = require("discord.js");
 
 const TOKEN = process.env.TOKEN;
-const CLIENT_ID = process.env.CLIENT_ID;
-const GUILD_ID = process.env.GUILD_ID;
 
-if (!TOKEN || !CLIENT_ID || !GUILD_ID) {
-  console.error("ERROR: Missing TOKEN, CLIENT_ID, or GUILD_ID.");
+if (!TOKEN) {
+  console.error("ERROR: Missing TOKEN.");
   process.exit(1);
 }
-
-const commands = [
-  new SlashCommandBuilder()
-    .setName("flood")
-    .setDescription("Send messages with Madea emblem")
-    .setDMPermission(true)
-    .addStringOption(function(o) {
-      return o.setName("message").setDescription("Message to send").setRequired(true);
-    })
-    .addIntegerOption(function(o) {
-      return o.setName("count").setDescription("Number of times to send (1-16)").setMinValue(1).setMaxValue(16);
-    }),
-  new SlashCommandBuilder()
-    .setName("ping")
-    .setDescription("Check if bot is alive")
-    .setDMPermission(true),
-].map(function(cmd) { return cmd.toJSON(); });
-
-const rest = new REST({ version: "10" }).setToken(TOKEN);
-
-(async function() {
-  try {
-    await rest.put(Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID), { body: commands });
-    console.log("Guild commands registered!");
-    await rest.put(Routes.applicationCommands(CLIENT_ID), { body: commands });
-    console.log("Global commands registered!");
-  } catch (err) {
-    console.error("Failed to register commands:", err);
-  }
-})();
 
 const client = new Client({
   intents: [
@@ -84,11 +52,15 @@ client.on(Events.InteractionCreate, async function(interaction) {
       await interaction.reply({ content: "Sent message " + count + " times!", ephemeral: true });
     }
   } catch (err) {
-    console.error(err);
+    console.error("Error:", err);
     if (!interaction.replied) {
       await interaction.reply({ content: "Something went wrong!", ephemeral: true });
     }
   }
+});
+
+process.on("unhandledRejection", function(err) {
+  console.error("Unhandled rejection:", err);
 });
 
 client.login(TOKEN).catch(function(err) {
